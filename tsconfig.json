@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "module": "ESNext",
+    "types": [
+      "vite/client",
+      "vue3-toastify/global"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}
