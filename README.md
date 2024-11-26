@@ -1,44 +1,43 @@
 # AI Chat Assistant
 
-A Vue.js-based chat interface that integrates with Azure OpenAI to provide an interactive AI assistant experience, Inspired from [Sonny Sangha](https://github.com/sonnysangha)
+A Vue.js-based chat interface that integrates with Azure OpenAI for text and speech interactions, providing an interactive AI assistant experience.
 
 ## Features
 
 - 💬 Real-time chat interface
+- 🎙️ Voice recording and transcription
+- 🔊 Text-to-Speech capability
 - 🤖 Integration with Azure OpenAI API
-- ⚡ Loading states and animations
-- 📱 Responsive design
-- 🎨 Modern UI with Tailwind CSS
-- 🔄 Message state management
-- 🌐 Event-based communication system
+- ⏳ Rate limit handling
+- 🔍 Voice Activity Detection (VAD)
 
 ## Technical Stack
 
 - **Frontend Framework**: Vue.js 3 with TypeScript
 - **Styling**: Tailwind CSS
 - **Icons**: Material Design Icons
-- **AI Integration**: Azure OpenAI API
+- **AI Integration**: 
+  - Azure OpenAI API (Chat)
+  - Azure OpenAI Whisper (Speech-to-Text)
+  - Azure OpenAI TTS (Text-to-Speech)
 - **State Management**: Vue's Composition API + Event Emitter
-
-## Component Structure
+- **Voice Detection**: @ricky0123/vad-web
+- **Notifications**: vue3-toastify
 
 ### Messages.vue
-The main chat interface component that:
 - Displays chat messages
 - Handles message loading states
 - Manages AI responses
-- Implements message queue system
+- Implements real-time audio playback
+- Auto-scrolling message list
 
-### Key Features
-- Handles message loading states
-- Manages AI responses
-- Implements message queue system
+### Recorder.vue
+- Handles voice recording
+- Implements Voice Activity Detection
+- Manages audio transcription
+- Provides recording cancel functionality
+- Visual recording indicators
 
-## Environment Variables Required
-- VITE_AZURE_OPENAI_API_KEY_CHAT = "your-api-key"
-- VITE_AZURE_OPENAI_ENDPOINT_CHAT = "your-endpoint"
-- VITE_AZURE_OPENAI_VERSION_CHAT = "your-version"
-- VITE_AZURE_OPENAI_DEPLOYMENT_NAME_CHAT = "your-deployment-name"
 
 ## Installation
 
