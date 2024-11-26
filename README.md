@@ -1,6 +1,6 @@
 # AI Chat Assistant
 
-A Vue.js-based chat interface that integrates with Azure OpenAI to provide an interactive AI assistant experience.
+A Vue.js-based chat interface that integrates with Azure OpenAI to provide an interactive AI assistant experience, Inspired from [Sonny Sangha](https://github.com/sonnysangha)
 
 ## Features
 

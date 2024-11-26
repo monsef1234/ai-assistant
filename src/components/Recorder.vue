@@ -1,5 +1,5 @@
 <template>
-  <div class="h-60 bg-black rounded-lg py-5">
+  <div class="h-[20%] bg-black rounded-lg py-5">
     <button
       @click="startVadFunction"
       class="mx-auto w-24 block disabled:cursor-not-allowed"
@@ -71,12 +71,25 @@ export default defineComponent({
         this.isActive = true;
         if (window.vad) {
           this.mymicVad = await window.vad.MicVAD.new({
+            preSpeechPadFrames: 5, // Reduces initial clip
+            positiveSpeechThreshold: 0.8, // Lower threshold for better detection
+            negativeSpeechThreshold: 0.8, // Lower threshold for better detection
+            minSpeechFrames: 5, // Minimum frames to trigger speech
+            startOnLoad: true, // Start listening immediately
             onSpeechStart: () => {
               console.log("start");
             },
             onSpeechEnd: (audio: Float32Array | undefined) => {
               this.mymicVad?.pause();
               this.transcriptionAudio(audio);
+            },
+            onVADMisfire: () => {
+              toast.info("Please speak louder", {
+                position: "top-center",
+                autoClose: 3000,
+                pauseOnHover: true,
+                theme: "dark",
+              } as ToastContainerOptions);
             },
           });
 
@@ -158,13 +171,30 @@ export default defineComponent({
 
         emitter.emit("newMessage", transcription.text);
       } catch (err: any) {
-        console.log(err);
+        let errMsg = "An error accured";
+
+        if (err.toString().includes("Please retry after")) {
+          const retryMatch = err.message.match(
+            /Please retry after (\d+\s+\w+)/
+          );
+
+          if (retryMatch) {
+            errMsg = `Please retry after ${retryMatch[1]} due to rate limit`;
+          }
+        }
+        toast.error(errMsg);
+        emitter.emit("isLoading", false);
+        this.isActive = false;
       }
     },
   },
 
   beforeUnmount() {
     emitter.off("receivedMessage");
+    if (this.mymicVad) {
+      this.mymicVad.pause();
+      this.mymicVad = null;
+    }
   },
 
   created() {

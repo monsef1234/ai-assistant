@@ -1,7 +1,7 @@
 <template>
   <div class="py-5 h-full flex flex-col">
     <div
-      class="min-[300px] w-full max-w-[800px] mx-auto px-10 flex-1 flex flex-col"
+      class="min-[300px] w-full max-w-[800px] mx-auto px-10 flex flex-col h-[80%]"
     >
       <div class="flex justify-between items-center">
         <svg-icon
@@ -10,9 +10,7 @@
           color="black"
           size="40"
         ></svg-icon>
-        <button
-          class="bg-blue-500 rounded-full p-1 cursor-pointer active:scale-95 transition-all"
-        >
+        <button class="cursor-pointer active:scale-95 transition-all">
           <svg-icon
             type="mdi"
             :path="mdiCogOutline"

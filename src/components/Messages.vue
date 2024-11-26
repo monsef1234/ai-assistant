@@ -1,6 +1,9 @@
 <template>
-  <div class="flex-1 overflow-y-auto my-5 relative">
-    <div v-if="messages.length > 0" class="flex flex-col gap-2">
+  <div class="my-5 relative overflow-y-auto messages-container scroll-smooth">
+    <div
+      v-if="messages.length > 0"
+      class="flex flex-col gap-2 messages-list mr-3"
+    >
       <div v-for="message in messages" :key="message.id">
         <div
           class="flex flex-col gap-2"
@@ -75,16 +78,50 @@ export default defineComponent({
     return {
       messages: [] as Message[],
       id: null as number | null,
+
+      observer: null as MutationObserver | null,
     };
   },
 
   methods: {
+    scrollToBottom() {
+      if (this.observer) {
+        this.observer.disconnect();
+      }
+
+      this.observer = new MutationObserver(() => {
+        const element: HTMLElement | null = document.querySelector(
+          ".messages-container"
+        );
+        if (element) {
+          element.scrollTop = element.scrollHeight;
+        }
+      });
+      this.observer.observe(
+        document.querySelector(".messages-list") as HTMLElement,
+        {
+          childList: true,
+          subtree: true,
+        }
+      );
+    },
+
     getOpenAIChatInstance(): AzureOpenAI {
       return new AzureOpenAI({
         apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY_CHAT,
         endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT_CHAT,
         apiVersion: import.meta.env.VITE_AZURE_OPENAI_VERSION_CHAT,
         deployment: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT_NAME_CHAT,
+        dangerouslyAllowBrowser: true,
+      });
+    },
+
+    getOpenAISpeechInstance(): AzureOpenAI {
+      return new AzureOpenAI({
+        apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY_SPEECH,
+        endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT_SPEECH,
+        apiVersion: import.meta.env.VITE_AZURE_OPENAI_VERSION_SPEECH,
+        deployment: import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT_NAME_SPEECH,
         dangerouslyAllowBrowser: true,
       });
     },
@@ -105,6 +142,34 @@ export default defineComponent({
         model: "",
         max_tokens: 2000,
       };
+    },
+
+    async speechCompletionHandler(msg: string) {
+      try {
+        const openai = this.getOpenAISpeechInstance();
+        const mp3 = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: "alloy",
+          input: msg,
+        });
+
+        const buffer = await mp3.arrayBuffer();
+
+        // Convert buffer to audio and play
+        const blob = new Blob([buffer], { type: "audio/mpeg" });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+
+        await audio.play();
+
+        // Cleanup URL after playing
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+        };
+      } catch (err) {
+        console.error("Speech playback error:", err);
+        toast.error("Failed to play audio");
+      }
     },
 
     async chatCompletionHandler(msg: string) {
@@ -129,13 +194,18 @@ export default defineComponent({
           }
           return message;
         });
+
+        await this.speechCompletionHandler(
+          completion.choices[0].message.content
+        );
       } catch (err: any) {
-        toast.error(err);
+        toast.error(err || "An error accured");
         this.messages = this.messages.map((message: Message) => {
           if (message.id === this.id) {
             return {
               ...message,
-              response: "Sorry, there was an error processing your message.",
+              response:
+                "Sorry, there was an error processing your message, Try again later",
               isLoading: false,
               sender: msg,
             };
@@ -146,7 +216,18 @@ export default defineComponent({
     },
   },
 
+  watch: {
+    messages: {
+      handler() {
+        this.scrollToBottom();
+      },
+    },
+  },
+
   beforeUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
     emitter.off("newMessage");
     emitter.off("isLoading");
   },
@@ -162,15 +243,41 @@ export default defineComponent({
     });
 
     emitter.on("isLoading", (isLoading: boolean) => {
-      const newId = this.messages.length + 1;
-      this.id = newId;
-      this.messages.push({
-        id: newId,
-        sender: "",
-        response: "",
-        isLoading: isLoading,
-      });
+      if (isLoading) {
+        const newId = this.messages.length + 1;
+        this.id = newId;
+        this.messages.push({
+          id: newId,
+          sender: "",
+          response: "",
+          isLoading: isLoading,
+        });
+      } else {
+        this.messages = this.messages.filter(
+          (message: Message) => message.id !== this.id
+        );
+      }
     });
   },
 });
 </script>
+
+<style scoped>
+.messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 transparent;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+  border-radius: 3px;
+}
+</style>
