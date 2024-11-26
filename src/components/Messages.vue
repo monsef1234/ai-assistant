@@ -50,7 +50,7 @@
 import { defineComponent } from "vue";
 
 import { mdiArrowDownDropCircleOutline } from "@mdi/js";
-import { emitter } from "@/main";
+import { emitter } from "../main";
 import { AzureOpenAI } from "openai";
 import type {
   ChatCompletion,
@@ -60,8 +60,8 @@ import { toast } from "vue3-toastify";
 
 interface Message {
   id: number;
-  sender: string;
-  response: string;
+  sender: string | null;
+  response: string | null;
   isLoading: boolean;
 }
 
@@ -186,7 +186,7 @@ export default defineComponent({
         this.messages = this.messages.map((message: Message) => {
           if (message.id === this.id) {
             return {
-              ...message,
+              id: message.id,
               response: completion.choices[0].message.content,
               isLoading: false,
               sender: msg,
@@ -203,7 +203,7 @@ export default defineComponent({
         this.messages = this.messages.map((message: Message) => {
           if (message.id === this.id) {
             return {
-              ...message,
+              id: message.id,
               response:
                 "Sorry, there was an error processing your message, Try again later",
               isLoading: false,

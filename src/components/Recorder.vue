@@ -22,7 +22,7 @@ import type { MicVAD } from "@ricky0123/vad-web";
 
 import { toast, type ToastContainerOptions } from "vue3-toastify";
 import { AzureOpenAI } from "openai";
-import { emitter } from "@/main";
+import { emitter } from "../main";
 
 import active from "@/assets/images/active.gif";
 import inactive from "@/assets/images/inactive.gif";
@@ -79,9 +79,11 @@ export default defineComponent({
             onSpeechStart: () => {
               console.log("start");
             },
-            onSpeechEnd: (audio: Float32Array | undefined) => {
+            onSpeechEnd: (audio: Float32Array) => {
               this.mymicVad?.pause();
-              this.transcriptionAudio(audio);
+              if (audio) {
+                this.transcriptionAudio(audio);
+              }
             },
             onVADMisfire: () => {
               toast.info("Please speak louder", {
@@ -93,7 +95,7 @@ export default defineComponent({
             },
           });
 
-          this.mymicVad.start();
+          this.mymicVad?.start();
         } else {
           toast.error("VAD is not available", {
             position: "top-center",
@@ -167,6 +169,7 @@ export default defineComponent({
         const transcription = await openaiWhisper.audio.transcriptions.create({
           file: audioFile,
           language: "en",
+          model: "whisper-1",
         });
 
         emitter.emit("newMessage", transcription.text);
