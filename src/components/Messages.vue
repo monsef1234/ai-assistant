@@ -1,5 +1,7 @@
 <template>
-  <div class="my-5 relative overflow-y-auto messages-container scroll-smooth">
+  <div
+    class="relative overflow-y-auto messages-container flex-1 my-9 scroll-smooth"
+  >
     <div
       v-if="messages.length > 0"
       class="flex flex-col gap-2 messages-list mr-3"
@@ -58,6 +60,8 @@ import type {
 } from "openai/resources/index";
 import { toast } from "vue3-toastify";
 
+type Voice = "alloy" | "echo" | "fable" | "nova" | "onyx" | "shimmer";
+
 interface Message {
   id: number;
   sender: string | null;
@@ -84,6 +88,16 @@ export default defineComponent({
   },
 
   methods: {
+    getStoredValue<T>(
+      key: string,
+      defaultValue: T,
+      transform?: (val: string) => T
+    ): T {
+      const value = localStorage.getItem(key);
+      if (!value) return defaultValue;
+      return transform ? transform(value) : (value as T);
+    },
+
     scrollToBottom() {
       if (this.observer) {
         this.observer.disconnect();
@@ -139,7 +153,7 @@ export default defineComponent({
             content: message,
           },
         ],
-        model: "",
+        model: "gpt-3.5-turbo",
         max_tokens: 2000,
       };
     },
@@ -149,7 +163,7 @@ export default defineComponent({
         const openai = this.getOpenAISpeechInstance();
         const mp3 = await openai.audio.speech.create({
           model: "tts-1",
-          voice: "alloy",
+          voice: this.getStoredValue("voice", "alloy"),
           input: msg,
         });
 
@@ -160,6 +174,7 @@ export default defineComponent({
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
 
+        audio.volume = this.getStoredValue("volume", 60, Number) / 100;
         await audio.play();
 
         // Cleanup URL after playing
@@ -199,11 +214,13 @@ export default defineComponent({
           completion.choices[0].message.content
         );
       } catch (err: any) {
+        console.log(err);
+
         toast.error(err || "An error accured");
         this.messages = this.messages.map((message: Message) => {
           if (message.id === this.id) {
             return {
-              id: message.id,
+              id: this.id,
               response:
                 "Sorry, there was an error processing your message, Try again later",
               isLoading: false,
@@ -233,7 +250,7 @@ export default defineComponent({
   },
 
   created() {
-    emitter.on("newMessage", async (message: string) => {
+    emitter.on("newMessage", async ({ message }: { message: string }) => {
       try {
         await this.chatCompletionHandler(message);
         emitter.emit("receivedMessage");

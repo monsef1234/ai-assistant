@@ -1,5 +1,7 @@
 <template>
-  <div class="h-[20%] bg-black rounded-lg py-5">
+  <div
+    class="bg-black h-[20%] rounded-lg py-5 transition-all duration-300 flex flex-col justify-between"
+  >
     <button
       @click="startVadFunction"
       class="mx-auto w-24 block disabled:cursor-not-allowed"
@@ -53,6 +55,10 @@ export default defineComponent({
   },
 
   methods: {
+    calculateVolume(value: number) {
+      return value / 100;
+    },
+
     getOpenAIWhisperInstance(): AzureOpenAI {
       return new AzureOpenAI({
         apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY_WHISPER,
@@ -65,7 +71,6 @@ export default defineComponent({
 
     async startVadFunction() {
       try {
-        // Request microphone permission first
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
         this.isActive = true;
@@ -74,16 +79,11 @@ export default defineComponent({
             preSpeechPadFrames: 5, // Reduces initial clip
             positiveSpeechThreshold: 0.8, // Lower threshold for better detection
             negativeSpeechThreshold: 0.8, // Lower threshold for better detection
-            minSpeechFrames: 5, // Minimum frames to trigger speech
-            startOnLoad: true, // Start listening immediately
-            onSpeechStart: () => {
-              console.log("start");
-            },
+            minSpeechFrames: 5,
+            startOnLoad: true,
             onSpeechEnd: (audio: Float32Array) => {
               this.mymicVad?.pause();
-              if (audio) {
-                this.transcriptionAudio(audio);
-              }
+              audio && this.transcriptionAudio(audio);
             },
             onVADMisfire: () => {
               toast.info("Please speak louder", {
@@ -172,7 +172,9 @@ export default defineComponent({
           model: "whisper-1",
         });
 
-        emitter.emit("newMessage", transcription.text);
+        emitter.emit("newMessage", {
+          message: transcription.text,
+        });
       } catch (err: any) {
         let errMsg = "An error accured";
 
