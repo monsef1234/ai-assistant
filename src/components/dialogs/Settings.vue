@@ -33,7 +33,7 @@
 import { defineComponent } from "vue";
 
 import slider from "vue3-slider";
-import { emitter } from "@/main";
+import { emitter } from "../../main";
 
 import "vue-select/dist/vue-select.css";
 
@@ -78,16 +78,6 @@ export default defineComponent({
       localStorage.setItem("volume", val.toString());
       emitter.emit("volume", val);
     },
-  },
-
-  mounted() {
-    emitter.on("openSettings", (val: boolean) => {
-      this.openSettings = val;
-    });
-  },
-
-  beforeUnmount() {
-    emitter.off("openSettings");
   },
 });
 </script>

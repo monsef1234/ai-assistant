@@ -60,8 +60,6 @@ import type {
 } from "openai/resources/index";
 import { toast } from "vue3-toastify";
 
-type Voice = "alloy" | "echo" | "fable" | "nova" | "onyx" | "shimmer";
-
 interface Message {
   id: number;
   sender: string | null;
